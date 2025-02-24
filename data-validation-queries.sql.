@@ -1,0 +1,26 @@
+-- ✅ 1. Check for duplicate entries in a table
+SELECT customer_id, COUNT(*) 
+FROM customers
+GROUP BY customer_id
+HAVING COUNT(*) > 1;
+
+-- ✅ 2. Find NULL values in important columns
+SELECT * 
+FROM orders 
+WHERE customer_id IS NULL OR order_date IS NULL;
+
+-- ✅ 3. Validate email format using a simple pattern match
+SELECT email 
+FROM users 
+WHERE email NOT LIKE '%_@_%._%';
+
+-- ✅ 4. Verify referential integrity (check if all foreign keys exist)
+SELECT o.order_id, o.customer_id 
+FROM orders o 
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+WHERE c.customer_id IS NULL;
+
+-- ✅ 5. Ensure data consistency (check for mismatched values)
+SELECT * 
+FROM payments 
+WHERE payment_amount <= 0; -- Payment amounts should never be zero or negative
