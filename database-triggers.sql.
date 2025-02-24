@@ -1,43 +1,41 @@
--- ✅ 1. Stored Procedure to Get Customer Orders by Date Range
+-- ✅ 1. Trigger to Automatically Update Stock After an Order is Placed
 DELIMITER $$
 
-CREATE PROCEDURE GetCustomerOrders(
-    IN start_date DATE, 
-    IN end_date DATE
-)
+CREATE TRIGGER UpdateStockAfterOrder
+AFTER INSERT ON order_items
+FOR EACH ROW
 BEGIN
-    SELECT order_id, customer_id, order_date, total_amount 
-    FROM orders 
-    WHERE order_date BETWEEN start_date AND end_date;
+    UPDATE products 
+    SET stock_quantity = stock_quantity - NEW.quantity 
+    WHERE product_id = NEW.product_id;
 END $$
 
 DELIMITER ;
 
--- ✅ 2. Stored Procedure to Insert a New Customer
+-- ✅ 2. Trigger to Prevent Negative Stock
 DELIMITER $$
 
-CREATE PROCEDURE AddNewCustomer(
-    IN cust_name VARCHAR(255), 
-    IN cust_email VARCHAR(255)
-)
+CREATE TRIGGER PreventNegativeStock
+BEFORE UPDATE ON products
+FOR EACH ROW
 BEGIN
-    INSERT INTO customers (name, email) 
-    VALUES (cust_name, cust_email);
+    IF NEW.stock_quantity < 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Stock cannot be negative!';
+    END IF;
 END $$
 
 DELIMITER ;
 
--- ✅ 3. Stored Procedure to Update Order Status
+-- ✅ 3. Trigger to Log Deleted Users
 DELIMITER $$
 
-CREATE PROCEDURE UpdateOrderStatus(
-    IN order_id INT, 
-    IN new_status VARCHAR(50)
-)
+CREATE TRIGGER LogDeletedUsers
+BEFORE DELETE ON users
+FOR EACH ROW
 BEGIN
-    UPDATE orders 
-    SET status = new_status 
-    WHERE order_id = order_id;
+    INSERT INTO deleted_users_log (user_id, email, deleted_at) 
+    VALUES (OLD.user_id, OLD.email, NOW());
 END $$
 
 DELIMITER ;
